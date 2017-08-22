@@ -1,56 +1,48 @@
 #include "DataLine.h"
 #include <ege.h>
 
-void DataLine::draw(const int &pos, const int &weight)
+DataLine::DataLine() : m_key(0), m_checked(false), m_selected(false)
 {
-    ege::color_t color = ege::getcolor(), flcolor = ege::getfillcolor();
-    if(selected){
-        ege::setcolor(ege::LIGHTBLUE);
-        ege::setfillcolor(ege::LIGHTBLUE);
-        selected = false;
-    }
-    if(checked){
-        ege::setcolor(ege::LIGHTRED);
-        ege::setfillcolor(ege::LIGHTRED);
-        checked = false;
-    }
-    // ege::bar(pos, 700-key, 1+pos+weight, 701);
-    for(int i=0; i<weight; ++i)
-        ege::line(pos+i, 700, pos+i, 701-key);
-    // ege::line(pos, 700, pos, 700-key);
-    // ege::line(pos+1, 700, pos+1, 700-key);
-    ege::setcolor(color);
-    ege::setfillcolor(flcolor);
-}
 
-void DataLine::setKey(const int &nkey)
-{
-    key = nkey;
-}
-
-void DataLine::setChecked()
-{
-    checked = true;
-}
-
-void DataLine::setSelected()
-{
-    selected = true;
-}
-
-int DataLine::getKey() const
-{
-    return key;
-}
-
-DataLine::DataLine()
-{
-    key = 0;
-    checked = false;
-    selected = false;
 }
 
 DataLine::~DataLine()
 {
 
+}
+
+void DataLine::draw(const int xPos, const int width, const int yPos, const int viewHeight)
+{
+    if (m_selected) {
+        ege::setcolor(ege::LIGHTBLUE);
+        ege::setfillcolor(ege::LIGHTBLUE);
+        m_selected = false;
+    }
+    if (m_checked) {
+        ege::setcolor(ege::LIGHTRED);
+        ege::setfillcolor(ege::LIGHTRED);
+        m_checked = false;
+    }
+    for (auto i = 0u; i < width; ++i)
+        ege::line(xPos + i, yPos + viewHeight, xPos + i, yPos + viewHeight - m_key);
+}
+
+void DataLine::setChecked()
+{
+    m_checked = true;
+}
+
+void DataLine::setSelected()
+{
+    m_selected = true;
+}
+
+void DataLine::setKey(const int key)
+{
+    m_key = key;
+}
+
+const int DataLine::getKey() const
+{
+    return m_key;
 }
