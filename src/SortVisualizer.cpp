@@ -33,28 +33,29 @@ const bool draw(DataLine *data, const int num, const std::string &str = "Unknown
 
 const bool countSort(DataLine *data, const int num)
 {
-    int *count = new int[g_maxValue];
-    for (int i = 0; i < g_maxValue; ++i)
+    int *count = new int[g_maxValue + 1];
+    for (int i = 0; i <= g_maxValue; ++i)
         count[i] = 0;
     for (int i = 0; i < num; ++i) {
         data[i].setSelected();
-        ++count[data[i].getKey() - 1];
+        ++count[data[i].getKey()];
         if (!draw(data, num, "Count")) {
             delete[] count;
             return false;
         }
     }
-    for (int i = 1; i < g_maxValue; ++i) {
+    for (int i = 1; i <= g_maxValue; ++i) {
         count[i] += count[i-1];
         if (!draw(data, num, "Count", static_cast<float>(i) / g_maxValue * 100.0f)) {
             delete[] count;
             return false;
         }
+
     }
     DataLine *ndata = new DataLine[num];
     for (int i = 0; i < num; ++i) {
         data[i].setChecked();
-        ndata[--count[data[i].getKey()-1]] = std::move(data[i]);
+        ndata[--count[data[i].getKey()]] = std::move(data[i]);
         if (!draw(ndata, num, "Count")) {
             delete[] ndata;
             delete[] count;
@@ -214,8 +215,8 @@ int main()
 {
     setinitmode( INIT_NOFORCEEXIT | INIT_RENDERMANUAL );
     //setinitmode( INIT_RENDERMANUAL | INIT_NOBORDER | INIT_NOFORCEEXIT );
-    initgraph(640, 320);
-    setcaption("Sort Visualizer based on EGE by SurgeNight");
+    initgraph(1300, 320);
+    setcaption("Sort Visualizer  by SurgeNight");
     std::string str[] = {
         "bubble sort",
         "insert sort",
