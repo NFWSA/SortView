@@ -4,13 +4,14 @@
 #include <string>
 #include <chrono>
 #include <algorithm>
+#include <exception>
 
 using namespace ege;
 
 int g_viewHeight = 700, g_maxValue = 700;
 std::chrono::time_point<std::chrono::system_clock> g_beginTime;
 
-const bool draw(DataLine *data, const int num, const std::string &str = "Unknown", const float rate = -1.0f)
+void draw(DataLine *data, const int num, const std::string &str = "Unknown", const float rate = -1.0f)
 {
     int width = getwidth() / num;
     color_t color = getcolor(), flcolor = getfillcolor();
@@ -26,141 +27,105 @@ const bool draw(DataLine *data, const int num, const std::string &str = "Unknown
     else
         xyprintf(30, g_viewHeight + 10, "%s Sort : %0.2lf sec. %0.2f%%", str.c_str(), diff.count(), rate);
     delay_ms(0);
-    if (kbhit() && getch() == key_esc)
-        return false;
-    return true;
+    if (kbhit() && getch() == key_esc) {
+        std::runtime_error a("break sort");
+        throw a;
+    }
 }
 
-const bool countSort(DataLine *data, const int num)
+void countSort(DataLine *data, const int num)
 {
     int *count = new int[g_maxValue + 1];
-    for (int i = 0; i <= g_maxValue; ++i)
-        count[i] = 0;
-    for (int i = 0; i < num; ++i) {
-        data[i].setSelected();
-        ++count[data[i].getKey()];
-        if (!draw(data, num, "Count")) {
-            delete[] count;
-            return false;
+    try {
+        for (int i = 0; i <= g_maxValue; ++i)
+            count[i] = 0;
+        for (int i = 0; i < num; ++i) {
+            data[i].setAccessed();
+            ++count[data[i].getKey()];
+        }
+        for (int i = 1; i <= g_maxValue; ++i) {
+            count[i] += count[i-1];
+            draw(data, num, "Count", static_cast<float>(i) / g_maxValue * 100.0f);
         }
     }
-    for (int i = 1; i <= g_maxValue; ++i) {
-        count[i] += count[i-1];
-        if (!draw(data, num, "Count", static_cast<float>(i) / g_maxValue * 100.0f)) {
-            delete[] count;
-            return false;
-        }
-
+    catch (const std::runtime_error &e) {
+        delete[] count;
+        return;
     }
     DataLine *ndata = new DataLine[num];
-    for (int i = 0; i < num; ++i) {
-        data[i].setChecked();
-        ndata[--count[data[i].getKey()]] = std::move(data[i]);
-        if (!draw(ndata, num, "Count")) {
-            delete[] ndata;
-            delete[] count;
-            return false;
+    DataLine::setDrawFunc([&](){
+        draw(ndata, num, "Count");
+    });
+    try {
+        for (int i = 0; i < num; ++i) {
+            data[i].setAccessed();
+            ndata[--count[data[i].getKey()]] = std::move(data[i]);
         }
+    }
+    catch (const std::runtime_error &e) {
     }
     delete[] ndata;
     delete[] count;
-    return true;
 }
 
-const bool selectSort(DataLine *data, const int num)
+void selectSort(DataLine *data, const int num)
 {
     for (int i = 0; i < num; ++i) {
         int key = i;
         for (int j = i + 1; j < num; ++j) {
-            data[key].setChecked();
-            data[j].setSelected();
-            if (data[j].getKey() < data[key].getKey())
+            if (data[j] < data[key])
                 key = j;
-            if (!draw(data, num, "Select"))
-                return false;
         }
         std::swap(data[key], data[i]);
-        if (!draw(data, num, "Select"))
-            return false;
     }
-    return true;
 }
 
-const bool bubbleSort(DataLine *data, const int num)
+void bubbleSort(DataLine *data, const int num)
 {
     for (int i = 0; i < num; ++i) {
         for (int j = num - 1; j > i; --j) {
-            data[j].setSelected();
-            if (data[j-1].getKey() > data[j].getKey()) {
-                data[j].setChecked();
+            if (data[j-1] > data[j]) {
                 std::swap(data[j - 1], data[j]);
             }
-            if (!draw(data, num, "Bubble"))
-                return false;
         }
     }
-    return true;
 }
 
-const bool quickSort(DataLine *data, const int beg, const int end, const int num)
+void quickSort(DataLine *data, const int beg, const int end, const int num)
 {
     if (beg >= end || beg == end - 1)
-        return true;
+        return;
     DataLine t = data[end - 1];
-    data[end-1].setChecked();
     int i = beg;
     for (int j = beg; j < end - 1; ++j) {
-        data[j].setSelected();
-        if (data[j].getKey() <= t.getKey()) {
-            data[j].setChecked();
+        if (data[j] <= t)
             std::swap(data[i++], data[j]);
-        }
-        if (!draw(data, num, "Quick"))
-            return false;
     }
     data[end - 1] = data[i];
     data[i] = t;
-    if (!draw(data, num, "Quick"))
-        return false;
-    if (!quickSort(data, beg, i, num))
-        return false;
-    if (!quickSort(data, i + 1, end, num))
-        return false;
-    return true;
+    quickSort(data, beg, i, num);
+    quickSort(data, i + 1, end, num);
 }
 
-const bool insertSort(DataLine *data, const int num)
+void insertSort(DataLine *data, const int num)
 {
     DataLine t;
     for (int i = 0; i < num; ++i) {
-        data[i].setChecked();
         t = data[i];
         int j = i;
         for (; j > 0; --j) {
-            data[j - 1].setSelected();
-            if (data[j - 1].getKey() > t.getKey())
+            if (data[j - 1] > t)
                 data[j] = data[j - 1];
             else
                 break;
-            if (!draw(data, num, "Insert"))
-                return false;
         }
         data[j] = std::move(t);
-        if (!draw(data, num, "Insert"))
-            return false;
     }
-    return true;
 }
 
-const bool stdSort(DataLine *data, const int num)
+void stdSort(DataLine *data, const int num)
 {
-    std::sort(data, data + num, [=](DataLine &lhd, DataLine &rhd) -> bool {
-        lhd.setChecked();
-        rhd.setChecked();
-        draw(data, num, "Std");
-        return lhd.getKey() < rhd.getKey();
-    });
-    return true;
+    std::sort(data, data + num);
 }
 
 void show(const int key)
@@ -181,31 +146,51 @@ void show(const int key)
     fin.clear();
     cleardevice();
     g_beginTime = std::chrono::system_clock::now();
-    bool rlt = false;
-    switch(key) {
-        case key_1:
-            rlt = bubbleSort(data, num);
-            break;
-        case key_2:
-            rlt = insertSort(data, num);
-            break;
-        case key_3:
-            rlt = selectSort(data, num);
-            break;
-        case key_4:
-            rlt = quickSort(data, 0, num, num);
-            break;
-        case key_5:
-            rlt = countSort(data, num);
-            break;
-        case key_6:
-            rlt = stdSort(data, num);
-            break;
-    }
-    if (rlt)
+    DataLine::setDrawFunc(nullptr);
+    try {
+        switch(key) {
+            case key_1:
+                DataLine::setDrawFunc([&](){
+                    draw(data, num, "Bubble");
+                });
+                bubbleSort(data, num);
+                break;
+            case key_2:
+                DataLine::setDrawFunc([&](){
+                    draw(data, num, "Insert");
+                });
+                insertSort(data, num);
+                break;
+            case key_3:
+                DataLine::setDrawFunc([&](){
+                    draw(data, num, "Select");
+                });
+                selectSort(data, num);
+                break;
+            case key_4:
+                DataLine::setDrawFunc([&](){
+                    draw(data, num, "Quick");
+                });
+                quickSort(data, 0, num, num);
+                break;
+            case key_5:
+                DataLine::setDrawFunc([&](){
+                    draw(data, num, "Count");
+                });
+                countSort(data, num);
+                break;
+            case key_6:
+                DataLine::setDrawFunc([&](){
+                    draw(data, num, "Std");
+                });
+                stdSort(data, num);
+                break;
+        }
         xyprintf(20, 20, "Sort finish, press any key to continue...");
-    else
+    }
+    catch (const std::runtime_error &e) {
         xyprintf(20, 20, "Sort break, press any key to continue...");
+    }
     getch();
     delete[] data;
     data = NULL;
