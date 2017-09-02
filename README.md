@@ -5,21 +5,23 @@
 + [ege](https://github.com/misakamm/xege)库13.04版本及以上
 
 ### 示例编译平台
-+ Windows 7 x64 Ultimate Sevice Pack 1
-+ mingw-w64-x86_64-g++
++ Windows 10 Professional x64 15063.540
++ mingw-w64-x86_64-g++ 7.1.0
 + ege library 15.04
++ [FatWhale](/NFWSA/FatWhale) 构建工具
 
 ## 用法
 ### 相关文件
-+ `MakeIn.bat`用于生成输入数据文件`in.txt`，双击后请输入数据数量
-+ 同目录`in.txt`内为输入数据，第一行为数据量，此后每行是一个数据，其值范围为[1，690]
++ `MakeIn.bat`用于生成输入数据文件`in.txt`，双击后请输入数据数量与数据最大值
++ 程序同目录`in.txt`内为输入数据，第一行为数据量与数据最大值，此后每行是一个数据
 
 ### 使用说明
 + `SortVisualizer.exe`为主程序，请根据程序提示进行输入
-+ 程序执行过程中，可以按==`Alt+F4`==结束本次运行
-+ 蓝色表示被扫描的数据，红色表示被选中等待处理的数据
-+ 计数排序的二次扫描那个过程实际上是在进行计数数组的处理，显示为扫描过程是为了更直观的感受消耗时间，其实际扫描数据组只有一次
-+ 您可以写好自己的排序过程，然后稍加修改加入到里面就可以看到你自己的排序程序的大概运行情况
++ 程序执行过程中，可以按==`Esc`==中断本次排序
++ 蓝色表示被取值的数据，红色表示被赋值的数据
++ 计数排序对数据进行一次扫描后是在进行计数数组的处理，程序会实时显示处理进度
++ 您可以按照`void (DataLine*, DataLine*, SortView*)`的原型写好自己的排序过程，然后照例加入到`algo`与`str`中即可看到排序效果
++ `algo`中记录按键到<排序名称， 排序函数>的关联，`str`中记录显示的菜单项，编号从1到9，最后一个元素为0
 
 # Sort algorithm visualized program
 
@@ -28,17 +30,23 @@
 + [ege library](https://github.com/misakamm/xege) 13.04+
 
 ### Sample compile platform
-+ Windows 7 x64 Ultimate Sevice Pack 1
-+ mingw-w64-x86_64-g++
++ Windows 10 Professional x64 15063.540
++ mingw-w64-x86_64-g++ 7.1.0
 + ege library 15.04
++ [FatWhale](/NFWSA/FatWhale) build tool
 
 ## Usage
-+ `MakeIn.bat`用于生成输入数据文件`in.txt`，双击后请输入数据数量
-+ 同目录`in.txt`内为输入数据，第一行为数据量，此后每行是一个数据，其值范围为[1，690]
+### Relative Files
++ `MakeIn.bat` is to make the input file `in.txt`, execute it and input the number and max value of the data
++ `in.txt` in folder that program in is the input file, one line is the number and max value of the data, and then one data per line
 
-## 执行说明
-+ SortView.exe为主程序，请根据程序提示进行输入
-+ 程序执行过程中，可以按==`Alt+F4`==结束本次运行
-+ 蓝色表示被扫描的数据，红色表示被选中等待处理的数据
-+ 计数排序的二次扫描那个过程实际上是在进行计数数组的处理，显示为扫描过程是为了更直观的感受消耗时间，其实际扫描数据组只有一次
-+ 您可以写好自己的排序过程，然后稍加修改加入到里面就可以看到你自己的排序程序的大概运行情况
+### Help
++ `SortView.exe` is the main program, please use it according to the information of it
++ during the executing of this program, user could press ==`Esc`== key to stop this sort
++ the blue data line means it is accessed, and red data line means it is assigned
++ after first scan, count sort is process the array of the count data, program will paint its rate real time
++ you could according to the theory of function `void (DataLine*, DataLine*, SortView*)` to write your own sort function, and then add it to `algo` and `str`, compile and you'll see the effect of your own sort function!
++ `algo` record the association of the key and <sort name, sort function>, `str` record the menu item string, the number from 1 to 9, and the number of last element is 0
+
+
++ Excuse me that I know my english is poor... And now I attempt to improve my english, please understand me. (Orz
