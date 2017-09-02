@@ -1,8 +1,11 @@
-#ifndef __SORTVIEW_H__
-#define __SORTVIEW_H__
+#ifndef __SN_SORT_VIEW_H__
+#define __SN_SORT_VIEW_H__
 
 #include <chrono>
 #include <string>
+
+namespace SurgeNight
+{
 
 class DataLine;
 
@@ -29,4 +32,6 @@ private:
     std::string m_name;
 };
 
-#endif //__SORTVIEW_H__
+}
+
+#endif //__SN_SORT_VIEW_H__

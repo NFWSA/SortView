@@ -1,7 +1,10 @@
-#ifndef __DATALINE_H__
-#define __DATALINE_H__
+#ifndef __SN_DATA_LINE_H__
+#define __SN_DATA_LINE_H__
 
 #include <functional>
+
+namespace SurgeNight
+{
 
 class DataLine{
 public:
@@ -18,7 +21,7 @@ public:
 
     void setKey(const unsigned int key) { m_key = key; }
     const unsigned int getKey() const { return m_key; }
-    static void setDrawFunc(const std::function<void()> func) { m_drawFunc = func; }
+    static void setDrawFunc(const std::function<void()> &func) { m_drawFunc = func; }
 
     void paint(const int x, const int y, const int w, const int h, const unsigned int max = 0);
 
@@ -29,4 +32,6 @@ private:
     bool m_accessed, m_assigned;
 };
 
-#endif //__DATALINE_H__
+}
+
+#endif //__SN_DATA_LINE_H__

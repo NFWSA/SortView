@@ -7,11 +7,18 @@
 #include <exception>
 
 using namespace ege;
+using namespace SurgeNight;
+
+class sort_break : std::logic_error {
+public:
+    sort_break(const std::string &msg) : std::logic_error(msg) {}
+};
 
 void countSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
     unsigned int max = view->getMax();
     auto count = new unsigned int[max + 1]();
+    std::fill(count, count + max + 1, 0);
     try {
         for (auto i = beg; i < end; ++i) {
             i->setAccessed();
@@ -22,24 +29,22 @@ void countSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
             view->paint(static_cast<float>(i) / max * 100.0f);
         }
     }
-    catch (const std::exception &e) {
+    catch (const sort_break &e) {
         delete[] count;
-        throw e;
-        // return;
+        throw;
     }
     auto ndata = new DataLine[end - beg];
     view->setData(ndata);
     try {
         for (auto i = beg; i < end; ++i) {
-            i->setAccessed();
             ndata[--count[i->getKey()]] = *i;
         }
     }
-    catch (const std::exception &e) {
+    catch (const sort_break &e) {
         view->setData(nullptr);
         delete[] ndata;
         delete[] count;
-        throw e;
+        throw;
     }
     view->setData(nullptr);
     delete[] ndata;
@@ -96,7 +101,7 @@ void insertSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
             else
                 break;
         }
-        *j = std::move(t);
+        std::swap(*j, t);
     }
 }
 
@@ -105,7 +110,7 @@ void stdSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
     std::sort(beg, end);
 }
 
-void show(const std::string &name, std::function<void(DataLine*, DataLine*, SortView*)> func)
+void show(const std::string &name, std::function<void(DataLine*, DataLine*, SortView*)> &func)
 {
     cleardevice();
     SortView view(name, "in.txt", 0, 0, getwidth(), getheight());
@@ -114,16 +119,17 @@ void show(const std::string &name, std::function<void(DataLine*, DataLine*, Sort
             cleardevice();
             view.paint();
             if (ege::kbhit() && ege::getch() == ege::key_esc) {
-                std::exception a;
+                sort_break a("Sort Break");
                 throw a;
             }
         });
         func(view.begin(), view.end(), &view);
         xyprintf(20, 20, "Sort finish, press any key to continue...");
     }
-    catch (const std::exception &e) {
+    catch (const sort_break &e) {
         xyprintf(20, 20, "Sort break, press any key to continue...");
     }
+    DataLine::setDrawFunc(nullptr);
     getch();
 }
 
@@ -154,7 +160,7 @@ int main()
     };
     setfont(30, 0, "Arial");
     setcolor(LIGHTGREEN);
-    while (true) {
+    while (is_run()) {
         cleardevice();
         xyprintf(20, 20, "Please press key to start to sort:");
         auto menuNum = sizeof(str) / sizeof(std::string);
@@ -166,7 +172,6 @@ int main()
         auto it = algo.find(key);
         if (it != algo.end()){
             show((*it).second.first, (*it).second.second);
-            continue;
         }
         else {
             xyprintf(20, 20, "Select error! Press any key to continue...");

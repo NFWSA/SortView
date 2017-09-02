@@ -1,6 +1,9 @@
 #include "DataLine.h"
 #include <ege.h>
 
+namespace SurgeNight
+{
+
 std::function<void()> DataLine::m_drawFunc = nullptr;
 
 DataLine::DataLine() : m_key(0), m_accessed(false), m_assigned(false)
@@ -70,4 +73,6 @@ void DataLine::paint(const int x, const int y, const int w, const int h, const u
     }
     for (auto i = 0u; i < w; ++i)
         ege::line(x + i, y + h, x + i, y + h - (max != 0 ? static_cast<double>(m_key) / max * h : m_key));
+}
+
 }
