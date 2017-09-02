@@ -19,10 +19,9 @@ void DataLine::setAccessed()
     drawFunc();
 }
 
-DataLine::DataLine(const DataLine &rhd) : m_key(rhd.m_key), m_accessed(rhd.m_accessed), m_assigned(rhd.m_assigned)
+DataLine::DataLine(const DataLine &rhd) : m_key(rhd.m_key), m_accessed(rhd.m_accessed), m_assigned(true)
 {
-    m_assigned = true;
-    drawFunc();
+
 }
 
 DataLine& DataLine::operator=(const DataLine &rhd)
@@ -57,7 +56,7 @@ const bool DataLine::operator>=(const DataLine &rhd)
     return m_key >= rhd.m_key;
 }
 
-void DataLine::draw(const int xPos, const int width, const int yPos, const int viewHeight)
+void DataLine::paint(const int x, const int y, const int w, const int h, const unsigned int max)
 {
     if (m_accessed) {
         ege::setcolor(ege::LIGHTBLUE);
@@ -69,27 +68,6 @@ void DataLine::draw(const int xPos, const int width, const int yPos, const int v
         ege::setfillcolor(ege::LIGHTRED);
         m_assigned = false;
     }
-    for (auto i = 0u; i < width; ++i)
-        ege::line(xPos + i, yPos + viewHeight, xPos + i, yPos + viewHeight - m_key);
-}
-
-void DataLine::setKey(const int key)
-{
-    m_key = key;
-}
-
-const int DataLine::getKey() const
-{
-    return m_key;
-}
-
-void DataLine::setDrawFunc(const std::function<void()> func)
-{
-    m_drawFunc = func;
-}
-
-void DataLine::drawFunc()
-{
-    if (m_drawFunc != nullptr)
-        m_drawFunc();
+    for (auto i = 0u; i < w; ++i)
+        ege::line(x + i, y + h, x + i, y + h - (max != 0 ? static_cast<double>(m_key) / max * h : m_key));
 }

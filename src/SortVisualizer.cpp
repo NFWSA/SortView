@@ -1,199 +1,130 @@
 #include "DataLine.h"
+#include "SortView.h"
 #include <ege.h>
-#include <fstream>
 #include <string>
-#include <chrono>
 #include <algorithm>
+#include <map>
 #include <exception>
 
 using namespace ege;
 
-int g_viewHeight = 700, g_maxValue = 700;
-std::chrono::time_point<std::chrono::system_clock> g_beginTime;
-
-void draw(DataLine *data, const int num, const std::string &str = "Unknown", const float rate = -1.0f)
+void countSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
-    int width = getwidth() / num;
-    color_t color = getcolor(), flcolor = getfillcolor();
-    cleardevice();
-    for (int i = 0; i < num; ++i) {
-        data[i].draw(i * width + 10, width, 0, g_viewHeight);
-        setcolor(color);
-        setfillcolor(flcolor);
-    }
-    std::chrono::duration<double> diff = std::chrono::system_clock::now() - g_beginTime;
-    if (rate < 0.0f)
-        xyprintf(30, g_viewHeight + 10, "%s Sort : %0.2lf sec.", str.c_str(), diff.count());
-    else
-        xyprintf(30, g_viewHeight + 10, "%s Sort : %0.2lf sec. %0.2f%%", str.c_str(), diff.count(), rate);
-    delay_ms(0);
-    if (kbhit() && getch() == key_esc) {
-        std::runtime_error a("break sort");
-        throw a;
-    }
-}
-
-void countSort(DataLine *data, const int num)
-{
-    int *count = new int[g_maxValue + 1];
+    unsigned int max = view->getMax();
+    auto count = new unsigned int[max + 1]();
     try {
-        for (int i = 0; i <= g_maxValue; ++i)
-            count[i] = 0;
-        for (int i = 0; i < num; ++i) {
-            data[i].setAccessed();
-            ++count[data[i].getKey()];
+        for (auto i = beg; i < end; ++i) {
+            i->setAccessed();
+            ++count[i->getKey()];
         }
-        for (int i = 1; i <= g_maxValue; ++i) {
+        for (auto i = 1u; i <= max; ++i) {
             count[i] += count[i-1];
-            draw(data, num, "Count", static_cast<float>(i) / g_maxValue * 100.0f);
+            view->paint(static_cast<float>(i) / max * 100.0f);
         }
     }
-    catch (const std::runtime_error &e) {
+    catch (const std::exception &e) {
         delete[] count;
-        return;
+        throw e;
+        // return;
     }
-    DataLine *ndata = new DataLine[num];
-    DataLine::setDrawFunc([&](){
-        draw(ndata, num, "Count");
-    });
+    auto ndata = new DataLine[end - beg];
+    view->setData(ndata);
     try {
-        for (int i = 0; i < num; ++i) {
-            data[i].setAccessed();
-            ndata[--count[data[i].getKey()]] = std::move(data[i]);
+        for (auto i = beg; i < end; ++i) {
+            i->setAccessed();
+            ndata[--count[i->getKey()]] = *i;
         }
     }
-    catch (const std::runtime_error &e) {
+    catch (const std::exception &e) {
+        view->setData(nullptr);
+        delete[] ndata;
+        delete[] count;
+        throw e;
     }
+    view->setData(nullptr);
     delete[] ndata;
     delete[] count;
 }
 
-void selectSort(DataLine *data, const int num)
+void selectSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
-    for (int i = 0; i < num; ++i) {
-        int key = i;
-        for (int j = i + 1; j < num; ++j) {
-            if (data[j] < data[key])
+    for (auto i = beg; i < end; ++i) {
+        auto key = i;
+        for (auto j = i + 1; j < end; ++j) {
+            if (*j < *key)
                 key = j;
         }
-        std::swap(data[key], data[i]);
+        std::swap(*key, *i);
     }
 }
 
-void bubbleSort(DataLine *data, const int num)
+void bubbleSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
-    for (int i = 0; i < num; ++i) {
-        for (int j = num - 1; j > i; --j) {
-            if (data[j-1] > data[j]) {
-                std::swap(data[j - 1], data[j]);
+    for (auto i = beg; i < end; ++i) {
+        for (auto j = end - 1; j > i; --j) {
+            if (*(j - 1) > *j) {
+                std::swap(*(j - 1), *j);
             }
         }
     }
 }
 
-void quickSort(DataLine *data, const int beg, const int end, const int num)
+void quickSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
-    if (beg >= end || beg == end - 1)
+    if (end <= beg)
         return;
-    DataLine t = data[end - 1];
-    int i = beg;
-    for (int j = beg; j < end - 1; ++j) {
-        if (data[j] <= t)
-            std::swap(data[i++], data[j]);
+    auto t = end - 1;
+    auto i = beg;
+    for (auto j = beg; j < end - 1; ++j) {
+        if (*j <= *t)
+            std::swap(*i++, *j);
     }
-    data[end - 1] = data[i];
-    data[i] = t;
-    quickSort(data, beg, i, num);
-    quickSort(data, i + 1, end, num);
+    std::swap(*i, *t);
+    quickSort(beg, i);
+    quickSort(i + 1, end);
 }
 
-void insertSort(DataLine *data, const int num)
+void insertSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
     DataLine t;
-    for (int i = 0; i < num; ++i) {
-        t = data[i];
-        int j = i;
-        for (; j > 0; --j) {
-            if (data[j - 1] > t)
-                data[j] = data[j - 1];
+    for (auto i = beg; i < end; ++i) {
+        t = *i;
+        auto j = i;
+        for (; j > beg; --j) {
+            if (*(j - 1) > t)
+                *j = *(j - 1);
             else
                 break;
         }
-        data[j] = std::move(t);
+        *j = std::move(t);
     }
 }
 
-void stdSort(DataLine *data, const int num)
+void stdSort(DataLine *beg, DataLine *end, SortView *view = nullptr)
 {
-    std::sort(data, data + num);
+    std::sort(beg, end);
 }
 
-void show(const int key)
+void show(const std::string &name, std::function<void(DataLine*, DataLine*, SortView*)> func)
 {
-    std::ifstream fin("in.txt", std::ifstream::in);
-    int num = 0, value = 0, j = 0;
-    fin >> num >> g_maxValue;
-    if(num <= 0 || g_maxValue <= 0)
-        return;
-    DataLine *data = new DataLine[num];
-    g_viewHeight = getheight() - 40;
-    while (fin >> value) {
-        if(g_maxValue > g_viewHeight)
-            value = static_cast<double>(value) / g_maxValue * g_viewHeight;
-        data[j++].setKey(value);
-    }
-    fin.close();
-    fin.clear();
     cleardevice();
-    g_beginTime = std::chrono::system_clock::now();
-    DataLine::setDrawFunc(nullptr);
+    SortView view(name, "in.txt", 0, 0, getwidth(), getheight());
     try {
-        switch(key) {
-            case key_1:
-                DataLine::setDrawFunc([&](){
-                    draw(data, num, "Bubble");
-                });
-                bubbleSort(data, num);
-                break;
-            case key_2:
-                DataLine::setDrawFunc([&](){
-                    draw(data, num, "Insert");
-                });
-                insertSort(data, num);
-                break;
-            case key_3:
-                DataLine::setDrawFunc([&](){
-                    draw(data, num, "Select");
-                });
-                selectSort(data, num);
-                break;
-            case key_4:
-                DataLine::setDrawFunc([&](){
-                    draw(data, num, "Quick");
-                });
-                quickSort(data, 0, num, num);
-                break;
-            case key_5:
-                DataLine::setDrawFunc([&](){
-                    draw(data, num, "Count");
-                });
-                countSort(data, num);
-                break;
-            case key_6:
-                DataLine::setDrawFunc([&](){
-                    draw(data, num, "Std");
-                });
-                stdSort(data, num);
-                break;
-        }
+        DataLine::setDrawFunc([&]() {
+            cleardevice();
+            view.paint();
+            if (ege::kbhit() && ege::getch() == ege::key_esc) {
+                std::exception a;
+                throw a;
+            }
+        });
+        func(view.begin(), view.end(), &view);
         xyprintf(20, 20, "Sort finish, press any key to continue...");
     }
-    catch (const std::runtime_error &e) {
+    catch (const std::exception &e) {
         xyprintf(20, 20, "Sort break, press any key to continue...");
     }
     getch();
-    delete[] data;
-    data = NULL;
 }
 
 int main()
@@ -211,9 +142,19 @@ int main()
         "std sort",
         "exit"
     };
+    typedef std::pair< std::string, std::function<void(DataLine*, DataLine*, SortView*)> > Algo;
+    typedef std::map< int, Algo > AlgoTab;
+    AlgoTab algo = {
+        { key_1, { "Bubble", bubbleSort } },
+        { key_2, { "Insert", insertSort } },
+        { key_3, { "Select", selectSort } },
+        { key_4, { "Quick", quickSort } },
+        { key_5, { "Count", countSort } },
+        { key_6, { "Std", stdSort } }
+    };
     setfont(30, 0, "Arial");
     setcolor(LIGHTGREEN);
-    while (is_run()) {
+    while (true) {
         cleardevice();
         xyprintf(20, 20, "Please press key to start to sort:");
         auto menuNum = sizeof(str) / sizeof(std::string);
@@ -222,8 +163,10 @@ int main()
         int key = getch();
         if (key_0 == key)
             break;
-        else if (key >= key_1 && key <= key_6) {
-            show(key);
+        auto it = algo.find(key);
+        if (it != algo.end()){
+            show((*it).second.first, (*it).second.second);
+            continue;
         }
         else {
             xyprintf(20, 20, "Select error! Press any key to continue...");

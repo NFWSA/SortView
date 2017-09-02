@@ -15,17 +15,17 @@ public:
     const bool operator<=(const DataLine &rhd);
     const bool operator>(const DataLine &rhd);
     const bool operator>=(const DataLine &rhd);
-    
-    void setKey(const int key);
-    const int getKey() const;
-    static void setDrawFunc(const std::function<void()> func);
 
-    void draw(const int xPos, const int weight = 2, const int yPos = 0, const int viewHeight = 700);
+    void setKey(const unsigned int key) { m_key = key; }
+    const unsigned int getKey() const { return m_key; }
+    static void setDrawFunc(const std::function<void()> func) { m_drawFunc = func; }
+
+    void paint(const int x, const int y, const int w, const int h, const unsigned int max = 0);
 
 private:
-    void drawFunc();
+    void drawFunc() { if (m_drawFunc != nullptr) m_drawFunc(); }
     static std::function<void()> m_drawFunc;
-    int m_key;
+    unsigned int m_key;
     bool m_accessed, m_assigned;
 };
 
