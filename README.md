@@ -8,7 +8,7 @@
 + Windows 10 Professional x64 15063.540
 + mingw-w64-x86_64-g++ 7.1.0
 + ege library 15.04
-+ [FatWhale](/NFWSA/FatWhale) 构建工具
++ [FatWhale](https://github.com/NFWSA/FatWhale) 构建工具
 
 ## 用法
 ### 相关文件
@@ -33,7 +33,7 @@
 + Windows 10 Professional x64 15063.540
 + mingw-w64-x86_64-g++ 7.1.0
 + ege library 15.04
-+ [FatWhale](/NFWSA/FatWhale) build tool
++ [FatWhale](https://github.com/NFWSA/FatWhale) build tool
 
 ## Usage
 ### Relative Files
